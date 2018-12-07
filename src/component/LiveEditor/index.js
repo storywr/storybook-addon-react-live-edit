@@ -10,6 +10,7 @@ import 'codemirror/mode/jsx/jsx';
 import { themeNameToVarName } from './utils';
 
 type LiveEditorProps = {
+    active: boolean,
     channel: any,
     api: any,
     theme?: ?string
@@ -21,7 +22,7 @@ type LiveEditorState = {
 };
 
 export default
-class LiveEditor extends React.Component<LiveEditorProps, LiveEditorState> {
+    class LiveEditor extends React.Component<LiveEditorProps, LiveEditorState> {
     state = {
         code: null,
         theme: this.props.theme
@@ -67,9 +68,14 @@ class LiveEditor extends React.Component<LiveEditorProps, LiveEditorState> {
         this.props.channel.removeListener(event.SyncOptions, this.loadOptions);
     }
 
-    componentDidUpdate() {
+    componentDidUpdate(prevProps) {
+        const theme = themeNameToVarName(this.state.theme) in themes ? this.state.theme : 'default';
+
+        if (prevProps.active !== this.props.active) {
+            this.codeMirror = CodeMirror(this.codeMirrorRef, { mode: 'jsx', theme });
+            this.codeMirror.on('change', this.codemirrorValueChanged);
+        }
         if (this.state.code !== null) {
-            const theme = themeNameToVarName(this.state.theme) in themes ? this.state.theme : 'default';
             if (!this.codeMirror) {
                 this.codeMirror = CodeMirror(this.codeMirrorRef, { mode: 'jsx', theme });
                 this.codeMirror.on('change', this.codemirrorValueChanged);
@@ -94,6 +100,7 @@ class LiveEditor extends React.Component<LiveEditorProps, LiveEditorState> {
     }
 
     render(): React.Element<'div'> {
+        if (!this.props.active) return null
         if (this.state.code === null) {
             return (
                 <div
@@ -114,10 +121,11 @@ class LiveEditor extends React.Component<LiveEditorProps, LiveEditorState> {
         const themeVarName = themeNameToVarName(this.state.theme);
         return (
             <div style={{ width: '100%', display: 'flex', flex: '1 1' }}>
-                {themeVarName in themes && (<style dangerouslySetInnerHTML={{ __html: themes[themeVarName] }} />) }
+                {themeVarName in themes && (<style dangerouslySetInnerHTML={{ __html: themes[themeVarName] }} />)}
                 <style dangerouslySetInnerHTML={{ __html: CodeMirrorStyle }} />
                 <style
-                    dangerouslySetInnerHTML={{ __html: `
+                    dangerouslySetInnerHTML={{
+                        __html: `
                         div.CodeMirror {
                             width: 100%;
                             height: initial;
