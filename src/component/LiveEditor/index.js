@@ -68,13 +68,18 @@ export default
         this.props.channel.removeListener(event.SyncOptions, this.loadOptions);
     }
 
+    setCodeMirror = () => {
+        this.codeMirror = CodeMirror(this.codeMirrorRef, { mode: 'jsx', theme });
+        this.codeMirror.on('change', this.codemirrorValueChanged);
+    }
+
     componentDidUpdate(prevProps) {
         const theme = themeNameToVarName(this.state.theme) in themes ? this.state.theme : 'default';
 
-        if (this.state.code !== null || prevProps.active !== this.props.active) {
+        if (prevProps.active !== this.props.active) this.setCodeMirror
+        if (this.state.code !== null) {
             if (!this.codeMirror) {
-                this.codeMirror = CodeMirror(this.codeMirrorRef, { mode: 'jsx', theme });
-                this.codeMirror.on('change', this.codemirrorValueChanged);
+                this.setCodeMirror
             } else {
                 this.codeMirror.setOption('theme', theme);
             }
